@@ -1,0 +1,878 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>After Flow — Video Editor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">F</span>
+    <div>
+      <strong>AFTER FLOW</strong>
+      <small>VIDEO EDITOR</small>
+    </div>
+  </div>
+
+  <input id="projectName" value="Projeto sem título">
+
+  <div class="top-actions">
+    <button id="undoBtn">↶</button>
+    <button id="redoBtn">↷</button>
+    <button class="export-btn" id="exportBtn">EXPORTAR</button>
+  </div>
+</header>
+
+<main class="editor">
+
+  <section class="preview-section">
+
+    <div class="preview-top">
+      <span>PREVIEW</span>
+      <span id="resolution">1080 × 1920</span>
+    </div>
+
+    <div class="preview">
+      <video id="video" playsinline></video>
+
+      <div class="empty-preview" id="emptyPreview">
+        <div class="preview-logo">F</div>
+        <h2>AFTER FLOW</h2>
+        <p>Importe um vídeo para começar</p>
+        <button id="importBtn">＋ Importar vídeo</button>
+      </div>
+
+      <div class="preview-badge">9:16</div>
+    </div>
+
+    <div class="player-controls">
+      <span id="currentTime">00:00</span>
+      <button id="restartBtn">⏮</button>
+      <button id="playBtn" class="play-btn">▶</button>
+      <button id="nextBtn">⏭</button>
+      <span id="duration">00:00</span>
+    </div>
+
+  </section>
+
+  <section class="timeline-section">
+
+    <div class="timeline-header">
+      <strong>TIMELINE</strong>
+      <div>
+        <button id="zoomOut">−</button>
+        <button id="zoomIn">＋</button>
+      </div>
+    </div>
+
+    <div class="timeline-scroll" id="timelineScroll">
+
+      <div class="timeline-ruler" id="ruler">
+        <span>00:00</span>
+        <span>00:01</span>
+        <span>00:02</span>
+        <span>00:03</span>
+        <span>00:04</span>
+        <span>00:05</span>
+      </div>
+
+      <div class="timeline-track">
+        <div class="track-label">VIDEO</div>
+        <div class="track-content">
+          <div class="clip video-clip" id="videoClip">
+            <span>VIDEO CLIP</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-track">
+        <div class="track-label">TEXT</div>
+        <div class="track-content">
+          <div class="clip text-clip" id="textClip">
+            <span>TEXT LAYER</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-track">
+        <div class="track-label">EFFECTS</div>
+        <div class="track-content">
+          <div class="clip effect-clip" id="effectClip">
+            <span>EFFECTS</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="playhead" id="playhead"></div>
+
+    </div>
+
+  </section>
+
+  <section class="tools-section">
+
+    <div class="tools-header">
+      <strong>TOOLS</strong>
+      <span id="toolStatus">Selecione uma ferramenta</span>
+    </div>
+
+    <div class="tools-grid">
+
+      <button class="tool active" data-tool="media">
+        <span>▣</span>
+        <small>Mídia</small>
+      </button>
+
+      <button class="tool" data-tool="text">
+        <span>T</span>
+        <small>Texto</small>
+      </button>
+
+      <button class="tool" data-tool="effects">
+        <span>✦</span>
+        <small>Efeitos</small>
+      </button>
+
+      <button class="tool" data-tool="cc">
+        <span>◉</span>
+        <small>CC</small>
+      </button>
+
+      <button class="tool" data-tool="reverse">
+        <span>⏪</span>
+        <small>Reverse</small>
+      </button>
+
+      <button class="tool" data-tool="quality">
+        <span>HD</span>
+        <small>Qualidade</small>
+      </button>
+
+      <button class="tool" data-tool="background">
+        <span>◌</span>
+        <small>Fundo</small>
+      </button>
+
+      <button class="tool" data-tool="audio">
+        <span>♫</span>
+        <small>Áudio</small>
+      </button>
+
+    </div>
+
+    <div class="tool-panel" id="toolPanel">
+      <p>Importe um vídeo para começar a editar.</p>
+    </div>
+
+  </section>
+
+</main>
+
+<input type="file" id="videoInput" accept="video/*" hidden>
+
+<script src="script.js"></script>
+</body>
+</html>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #090a0d;
+  --panel: #14161b;
+  --panel2: #1d2027;
+  --border: #292d36;
+  --blue: #4388ff;
+  --text: #f5f7fa;
+  --muted: #858b98;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--panel2);
+  border-radius: 7px;
+  padding: 9px 13px;
+}
+
+button:hover {
+  background: #303744;
+}
+
+.topbar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  background: var(--blue);
+  color: white;
+  font-size: 22px;
+  font-weight: 900;
+  padding: 9px 13px;
+  border-radius: 9px;
+}
+
+.brand strong {
+  display: block;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.brand small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+#projectName {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 9px;
+  border-radius: 6px;
+  width: 180px;
+}
+
+.top-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.export-btn {
+  background: var(--blue);
+  font-weight: bold;
+}
+
+.editor {
+  max-width: 1200px;
+  margin: auto;
+}
+
+.preview-section {
+  padding: 15px;
+  background: #0c0d11;
+}
+
+.preview-top {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+
+.preview {
+  height: min(55vh, 550px);
+  min-height: 250px;
+  max-width: 310px;
+  aspect-ratio: 9 / 16;
+  margin: auto;
+  background: #171a21;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+  background: black;
+}
+
+.empty-preview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.preview-logo {
+  font-size: 55px;
+  font-weight: 900;
+  color: var(--blue);
+}
+
+.empty-preview h2 {
+  letter-spacing: 4px;
+  font-size: 18px;
+  margin: 10px 0;
+}
+
+.empty-preview p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+.empty-preview button {
+  background: var(--blue);
+}
+
+.preview-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  background: #0009;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+
+.player-controls {
+  max-width: 450px;
+  margin: 15px auto 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-controls span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.play-btn {
+  background: var(--blue);
+  font-size: 18px;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+}
+
+.timeline-section {
+  background: #101116;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.timeline-header {
+  padding: 12px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-header strong,
+.tools-header strong {
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.timeline-scroll {
+  overflow-x: auto;
+  position: relative;
+  padding: 5px 0 15px;
+}
+
+.timeline-ruler {
+  display: flex;
+  min-width: 650px;
+  padding-left: 100px;
+  height: 25px;
+}
+
+.timeline-ruler span {
+  width: 100px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.timeline-track {
+  display: flex;
+  height: 48px;
+  margin-bottom: 4px;
+}
+
+.track-label {
+  width: 100px;
+  flex-shrink: 0;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+}
+
+.track-content {
+  min-width: 650px;
+  position: relative;
+}
+
+.clip {
+  height: 38px;
+  margin: 5px 4px;
+  width: 300px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  font-size: 10px;
+  overflow: hidden;
+}
+
+.video-clip {
+  background: #27466f;
+}
+
+.text-clip {
+  background: #453267;
+}
+
+.effect-clip {
+  background: #28534c;
+}
+
+.playhead {
+  position: absolute;
+  left: 110px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--blue);
+  pointer-events: none;
+}
+
+.tools-section {
+  background: var(--panel);
+  padding: 15px;
+}
+
+.tools-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.tools-header span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+}
+
+.tool {
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 14px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+
+.tool span {
+  font-size: 22px;
+  color: var(--muted);
+}
+
+.tool small {
+  font-size: 11px;
+}
+
+.tool.active {
+  border-color: var(--blue);
+  background: #1b2a40;
+}
+
+.tool.active span {
+  color: var(--blue);
+}
+
+.tool-panel {
+  margin-top: 15px;
+  padding: 15px;
+  background: #0e1015;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  min-height: 70px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tool-panel button {
+  margin: 5px;
+}
+
+.tool-panel input[type="range"] {
+  width: 100%;
+  accent-color: var(--blue);
+}
+
+@media (min-width: 800px) {
+  .editor {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .preview-section {
+    grid-row: span 2;
+  }
+
+  .timeline-section {
+    min-width: 0;
+  }
+
+  .tools-section {
+    min-width: 0;
+  }
+}
+const video = document.getElementById("video");
+const input = document.getElementById("videoInput");
+const emptyPreview = document.getElementById("emptyPreview");
+
+const playBtn = document.getElementById("playBtn");
+const currentTime = document.getElementById("currentTime");
+const duration = document.getElementById("duration");
+
+const toolPanel = document.getElementById("toolPanel");
+const toolStatus = document.getElementById("toolStatus");
+
+let videoURL = null;
+let zoom = 1;
+let reverse = false;
+let history = [];
+let historyIndex = -1;
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds)) return "00:00";
+
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+
+  return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+document.getElementById("importBtn").onclick = () => {
+  input.click();
+};
+
+document.getElementById("videoClip").onclick = () => {
+  input.click();
+};
+
+input.onchange = () => {
+  const file = input.files[0];
+
+  if (!file) return;
+
+  if (videoURL) URL.revokeObjectURL(videoURL);
+
+  videoURL = URL.createObjectURL(file);
+  video.src = videoURL;
+
+  video.style.display = "block";
+  emptyPreview.style.display = "none";
+
+  video.load();
+
+  video.onloadedmetadata = () => {
+    duration.textContent = formatTime(video.duration);
+
+    document.getElementById("resolution").textContent =
+      `${video.videoWidth} × ${video.videoHeight}`;
+
+    document.getElementById("videoClip").style.width =
+      Math.max(150, video.duration * 50) + "px";
+
+    saveHistory();
+  };
+};
+
+playBtn.onclick = () => {
+  if (!video.src) {
+    input.click();
+    return;
+  }
+
+  if (video.paused) {
+    video.playbackRate = reverse ? -1 : 1;
+
+    if (reverse) {
+      startReverse();
+    } else {
+      video.play();
+    }
+  } else {
+    video.pause();
+  }
+};
+
+document.getElementById("restartBtn").onclick = () => {
+  video.currentTime = 0;
+};
+
+document.getElementById("nextBtn").onclick = () => {
+  video.currentTime = Math.min(
+    video.duration,
+    video.currentTime + 1
+  );
+};
+
+video.ontimeupdate = () => {
+  currentTime.textContent = formatTime(video.currentTime);
+
+  const progress = video.duration
+    ? video.currentTime / video.duration
+    : 0;
+
+  document.getElementById("playhead").style.left =
+    `${110 + progress * 600}px`;
+};
+
+video.onplay = () => {
+  playBtn.textContent = "❚❚";
+};
+
+video.onpause = () => {
+  playBtn.textContent = "▶";
+};
+
+const toolContent = {
+  media: `
+    <h3>Mídia</h3>
+    <button onclick="document.getElementById('videoInput').click()">
+      Importar vídeo
+    </button>
+  `,
+
+  text: `
+    <h3>Texto</h3>
+    <input id="textInput" placeholder="Digite seu texto">
+    <button onclick="addText()">Adicionar texto</button>
+    <p>Texto 3D e glow avançado serão implementados no motor de renderização.</p>
+  `,
+
+  effects: `
+    <h3>Efeitos</h3>
+    <button onclick="applyEffect('blur')">Desfoque</button>
+    <button onclick="applyEffect('glow')">Glow</button>
+    <button onclick="applyEffect('shake')">Shake</button>
+    <button onclick="applyEffect('none')">Remover efeitos</button>
+  `,
+
+  cc: `
+    <h3>Color Correction</h3>
+    <label>Brilho</label>
+    <input type="range" min="50" max="150" value="100"
+      oninput="setCC('brightness',this.value)">
+    <label>Contraste</label>
+    <input type="range" min="50" max="200" value="100"
+      oninput="setCC('contrast',this.value)">
+    <label>Saturação</label>
+    <input type="range" min="0" max="200" value="100"
+      oninput="setCC('saturate',this.value)">
+    <button onclick="resetCC()">Resetar CC</button>
+  `,
+
+  reverse: `
+    <h3>Reverse</h3>
+    <button onclick="toggleReverse()">Ativar / Desativar reverse</button>
+    <p>Reverse de reprodução. Reverse exportado exige processamento do vídeo.</p>
+  `,
+
+  quality: `
+    <h3>Qualidade</h3>
+    <button onclick="setResolution(720)">720p</button>
+    <button onclick="setResolution(1080)">1080p</button>
+    <button onclick="setResolution(1440)">2K</button>
+    <p>Upscale por IA ainda precisa de um motor de processamento dedicado.</p>
+  `,
+
+  background: `
+    <h3>Remover fundo</h3>
+    <p>Requer integração de segmentação por IA.</p>
+    <button onclick="alert('A remoção de fundo por IA será integrada em uma próxima etapa.')">
+      Configurar IA
+    </button>
+  `,
+
+  audio: `
+    <h3>Áudio</h3>
+    <label>Volume</label>
+    <input type="range" min="0" max="100" value="100"
+      oninput="video.volume=this.value/100">
+    <button onclick="video.muted=!video.muted">Mutar / Desmutar</button>
+  `
+};
+
+document.querySelectorAll(".tool").forEach(button => {
+  button.onclick = () => {
+    document.querySelectorAll(".tool").forEach(item => {
+      item.classList.remove("active");
+    });
+
+    button.classList.add("active");
+
+    const tool = button.dataset.tool;
+
+    toolStatus.textContent = button.innerText;
+    toolPanel.innerHTML = toolContent[tool];
+  };
+});
+
+function setCC(type, value) {
+  const values = {
+    brightness: 100,
+    contrast: 100,
+    saturate: 100
+  };
+
+  values[type] = Number(value);
+
+  video.style.filter =
+    `brightness(${values.brightness}%) ` +
+    `contrast(${values.contrast}%) ` +
+    `saturate(${values.saturate}%)`;
+}
+
+function resetCC() {
+  video.style.filter = "none";
+}
+
+function applyEffect(effect) {
+  if (effect === "blur") {
+    video.style.filter = "blur(2px)";
+  }
+
+  if (effect === "glow") {
+    video.style.filter = "brightness(1.3) contrast(1.2)";
+  }
+
+  if (effect === "shake") {
+    video.style.animation = "shake 0.15s infinite";
+  }
+
+  if (effect === "none") {
+    video.style.filter = "none";
+    video.style.animation = "none";
+  }
+}
+
+function addText() {
+  const text = document.getElementById("textInput").value;
+
+  if (!text) return;
+
+  const layer = document.createElement("div");
+
+  layer.textContent = text;
+
+  layer.style.position = "absolute";
+  layer.style.top = "50%";
+  layer.style.left = "50%";
+  layer.style.transform = "translate(-50%,-50%)";
+  layer.style.color = "white";
+  layer.style.fontSize = "28px";
+  layer.style.fontWeight = "bold";
+  layer.style.textShadow = "0 0 15px white";
+
+  document.querySelector(".preview").appendChild(layer);
+}
+
+function toggleReverse() {
+  reverse = !reverse;
+
+  if (reverse) {
+    startReverse();
+  } else {
+    video.pause();
+    video.playbackRate = 1;
+  }
+}
+
+function startReverse() {
+  if (!reverse || video.paused) return;
+
+  if (video.currentTime <= 0) {
+    video.currentTime = video.duration;
+  } else {
+    video.currentTime = Math.max(0, video.currentTime - 0.05);
+  }
+
+  setTimeout(startReverse, 50);
+}
+
+function setResolution(height) {
+  alert(
+    `Resolução selecionada: ${height}p. ` +
+    `A exportação final será implementada com um motor de renderização.`
+  );
+}
+
+document.getElementById("zoomIn").onclick = () => {
+  zoom *= 1.2;
+  document.getElementById("timelineScroll").style.zoom = zoom;
+};
+
+document.getElementById("zoomOut").onclick = () => {
+  zoom = Math.max(0.5, zoom / 1.2);
+  document.getElementById("timelineScroll").style.zoom = zoom;
+};
+
+function saveHistory() {
+  history = history.slice(0, historyIndex + 1);
+
+  history.push({
+    time: video.currentTime
+  });
+
+  historyIndex++;
+}
+
+document.getElementById("undoBtn").onclick = () => {
+  if (historyIndex > 0) {
+    historyIndex--;
+    video.currentTime = history[historyIndex].time;
+  }
+};
+
+document.getElementById("redoBtn").onclick = () => {
+  if (historyIndex < history.length - 1) {
+    historyIndex++;
+    video.currentTime = history[historyIndex].time;
+  }
+};
+
+document.getElementById("exportBtn").onclick = () => {
+  alert(
+    "A exportação MP4, 2K e 120 FPS precisa ser implementada " +
+    "com um motor de renderização de vídeo."
+  );
+};
